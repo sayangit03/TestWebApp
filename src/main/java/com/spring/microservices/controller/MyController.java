@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -14,14 +15,21 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
+import com.spring.microservices.bean.Person;
+import com.spring.microservices.bean.Shop;
+import com.spring.microservices.bean.ShopAddress;
+import com.spring.microservices.bean.ShopProduct;
 import com.spring.microservices.bean.Student;
 import com.spring.microservices.repository.MyRepository;
+import com.spring.microservices.repository.MyRepositoryPerson;
+import com.spring.microservices.repository.MyRepositoryShop;
 
 @Controller
 public class MyController {
@@ -31,7 +39,19 @@ public class MyController {
 	
 	@Autowired
 	MyRepository myRepo;
+	
+	@Autowired
+	MyRepositoryShop myRepoShop;
 
+	@Autowired
+	MyRepositoryPerson myRepoPerson;
+	
+	MongoTemplate mongoTemplate;
+	
+	@Autowired
+	public MyController(MongoTemplate mongoTemplate) {
+		this.mongoTemplate = mongoTemplate;
+	}
 
 	@RequestMapping("/")
 	public String redirectUrl() {
@@ -51,10 +71,10 @@ public class MyController {
 	@ResponseBody
 	public String insertStudent() {
 		Student s1 = new Student();
-		s1.setId(101);
-		s1.setStudentName("DK Bose");
-		s1.setStudentAddress("Delhi");
-		s1.setMarks(75);
+		s1.setId(103);
+		s1.setStudentName("PK Bose");
+		s1.setStudentAddress("Haryana");
+		s1.setMarks(65);
 		
 		myRepo.save(s1);
 		
@@ -103,5 +123,70 @@ public class MyController {
 		
 		return "ok";
 		
+	}
+	
+	@RequestMapping("/mongo/insertShop")
+	@ResponseBody
+	public String insertShopDetails() {
+		
+		ShopAddress adrs = new ShopAddress();
+		adrs.setCity("Kolkata");
+		adrs.setCountry("India");
+		
+		ShopProduct product = new ShopProduct();
+		product.setProductId(1011);
+		product.setProductName("Burnol");
+		product.setProductPrice(175f);
+		ShopProduct product1 = new ShopProduct();
+		product1.setProductId(2022);
+		product1.setProductName("Water Bottle");
+		product1.setProductPrice(55f);
+		List<ShopProduct> shopProductList = new ArrayList<>();
+		shopProductList.add(product);
+		shopProductList.add(product1);
+		
+		Shop shop = new Shop();
+		shop.setShopId(101);
+		shop.setShopName("OK Store");
+		shop.setShopOwnerName("Owner Bro");
+		shop.setShopAddress(adrs);
+		shop.setShopProductList(shopProductList);
+		
+		myRepoShop.save(shop);
+		
+		return "ok!!";
+	}
+	
+	@RequestMapping("/mongo/fetchShop")
+	@ResponseBody
+	public Shop fetchShopDetails() {
+		Shop shop = myRepoShop.findAll().get(0);
+		
+		return mongoTemplate.findAll(Shop.class).get(0);
+	}
+	
+	@RequestMapping("/mongo/insertPersons")
+	@ResponseBody
+	public String insertPersons() {
+		for(int i=1; i<=1000; i++) {
+			Person p = new Person();
+			p.setId(i);
+			p.setGender("Male");
+			p.setName("Name"+i);
+			p.setLanguage("Lang"+i);
+			
+			myRepoPerson.save(p);
+		}
+		for(int i=1001; i<=2000; i++) {
+			Person p = new Person();
+			p.setId(i);
+			p.setGender("Female");
+			p.setName("Name"+i);
+			p.setLanguage("Lang"+i);
+			
+			myRepoPerson.save(p);
+		}
+		
+		return "ok";
 	}
 }
